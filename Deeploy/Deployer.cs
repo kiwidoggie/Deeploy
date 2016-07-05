@@ -31,7 +31,7 @@ namespace Deeploy
                 
                 
                 var l_Data = File.ReadAllBytes(l_FilePath);
-                if (!UploadFile(l_ShortPath, l_Data))
+                if (!UploadFile($"{p_UploadPath}/{l_ShortPath}", l_Data))
                     continue;
 
                 Console.WriteLine($"{l_Data.Length} bytes written.");
