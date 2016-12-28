@@ -25,7 +25,7 @@ namespace Deeploy.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ftp://myserver.lan")]
+        [global::System.Configuration.DefaultSettingValueAttribute("ftp://myserver")]
         public string Server {
             get {
                 return ((string)(this["Server"]));
@@ -80,6 +80,18 @@ namespace Deeploy.Properties {
             }
             set {
                 this["WipeBeforeUpload"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("./cert.key")]
+        public string CertPath {
+            get {
+                return ((string)(this["CertPath"]));
+            }
+            set {
+                this["CertPath"] = value;
             }
         }
     }

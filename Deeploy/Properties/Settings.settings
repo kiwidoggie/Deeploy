@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="Server" Type="System.String" Scope="User">
-      <Value Profile="(Default)">ftp://myserver.lan</Value>
+      <Value Profile="(Default)">ftp://myserver</Value>
     </Setting>
     <Setting Name="Port" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">21</Value>
@@ -16,6 +16,9 @@
     </Setting>
     <Setting Name="WipeBeforeUpload" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="CertPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">./cert.key</Value>
     </Setting>
   </Settings>
 </SettingsFile>

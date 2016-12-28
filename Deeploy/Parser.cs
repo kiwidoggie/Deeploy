@@ -12,12 +12,13 @@ namespace Deeploy
         public string Commit { get; set; }
         public string UrlBase { get; set; }
         public bool NoDeploy { get; set; }
+        public bool SftpUpload { get; set; }
 
         public bool Parse(string[] p_Arguments)
         {
             foreach (var l_Argument in p_Arguments)
             {
-                if (l_Argument.Length < 3)
+                if (l_Argument.Length < 2)
                     return false;
 
                 var s_Ret = false;
@@ -35,6 +36,11 @@ namespace Deeploy
                 {
                     s_Ret = true;
                     NoDeploy = true;
+                }
+                if (l_Argument.StartsWith("-S"))
+                {
+                    s_Ret = true;
+                    SftpUpload = true;
                 }
 
                 if (!s_Ret)

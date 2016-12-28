@@ -2,24 +2,17 @@
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using DeploySettings = Deeploy.Properties.Settings;
 
-namespace Deeploy
+namespace Deeploy.Deployment
 {
-    class Deployer
+    class FtpDeployer : Deployer
     {
-        private string m_Server = DeploySettings.Default.Server;
-        private int m_Port = DeploySettings.Default.Port;
-        private string m_Username = DeploySettings.Default.Username;
-        private string m_Password = DeploySettings.Default.Password;
-        private bool m_Wipe = DeploySettings.Default.WipeBeforeUpload;
-
         /// <summary>
         /// Upload's a directory recursively
         /// </summary>
         /// <param name="p_DirectoryPath"></param>
         /// <param name="p_UploadPath"></param>
-        private void UploadRecursive(string p_DirectoryPath, string p_UploadPath)
+        public override void UploadRecursive(string p_DirectoryPath, string p_UploadPath)
         {
             var s_Files = Directory.GetFiles(p_DirectoryPath);
 
@@ -52,16 +45,16 @@ namespace Deeploy
         /// <param name="p_Manifest">Manifest</param>
         /// <param name="p_Path">Path on the host's drive</param>
         /// <returns></returns>
-        public Task<bool> Deploy(Manifest p_Manifest, string p_Path)
+        public override Task<bool> Deploy(Manifest p_Manifest, string p_Path)
         {
             if (string.IsNullOrWhiteSpace(p_Path))
                 return Task.FromResult(false);
 
-            if (string.IsNullOrWhiteSpace(m_Server))
+            if (string.IsNullOrWhiteSpace(Server))
                 return Task.FromResult(false);
 
-            if (string.IsNullOrWhiteSpace(m_Username))
-                m_Username = "anonymous";
+            if (string.IsNullOrWhiteSpace(Username))
+                Username = "anonymous";
 
             var s_Files = Directory.GetFiles(p_Path, "*.*");
             var s_SubDirectories = Directory.GetDirectories(p_Path);
@@ -72,22 +65,22 @@ namespace Deeploy
         }
 
         /// <summary>
-        /// 
+        /// Uploads a file
         /// </summary>
         /// <param name="p_Path">Path on server</param>
         /// <param name="p_Data"></param>
-        /// <returns></returns>
-        private bool UploadFile(string p_Path, byte[] p_Data)
+        /// <returns>True on success, false otherwise</returns>
+        public override bool UploadFile(string p_Path, byte[] p_Data)
         {
             
-            var s_Path = GetNormalizedPath($"{m_Server}/{p_Path}");
+            var s_Path = GetNormalizedPath($"{Server}/{p_Path}");
             
             var s_Uri = new Uri(s_Path, UriKind.Absolute);
 
             var s_Request = (FtpWebRequest)WebRequest.Create(s_Uri);
             s_Request.Method = WebRequestMethods.Ftp.UploadFile;
 
-            s_Request.Credentials = new NetworkCredential(m_Username, m_Password);
+            s_Request.Credentials = new NetworkCredential(Username, Password);
 
             Console.WriteLine($"Getting stream for {s_Path}");
 
@@ -110,15 +103,20 @@ namespace Deeploy
             return true;
         }
 
-        private bool CreateDirectory(string p_Path)
+        /// <summary>
+        /// Creates a directory
+        /// </summary>
+        /// <param name="p_Path">Path on the remote server</param>
+        /// <returns>True on success, false otherwise</returns>
+        public override bool CreateDirectory(string p_Path)
         {
-            var s_Path = GetNormalizedPath($"{m_Server}/{p_Path}");
+            var s_Path = GetNormalizedPath($"{Server}/{p_Path}");
 
             var s_Uri = new Uri(s_Path, UriKind.Absolute);
 
             var s_Request = (FtpWebRequest)WebRequest.Create(s_Uri);
             s_Request.Method = WebRequestMethods.Ftp.MakeDirectory;
-            s_Request.Credentials = new NetworkCredential(m_Username, m_Password);
+            s_Request.Credentials = new NetworkCredential(Username, Password);
 
             try
             {
@@ -134,14 +132,6 @@ namespace Deeploy
             }
 
             return true;
-        }
-
-        public static string GetNormalizedPath(string p_Path)
-        {
-            return p_Path
-                    .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                    .Replace("\\", "/").Trim();
         }
     }
 }

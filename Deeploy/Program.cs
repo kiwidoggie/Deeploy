@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Deeploy.Deployment;
+using System;
 
 namespace Deeploy
 {
@@ -9,8 +10,10 @@ namespace Deeploy
         {
             if (p_Args.Length < 1)
             {
-                Console.WriteLine($"deeploy usage: deeploy -I<input directory> -O<output directory> -B<build number> -C<commit string> -U<base url>");
+                Console.WriteLine($"deeploy usage: deeploy -I<input directory> -O<output directory> -B<build number> -C<commit string> -U<base url> [-S]");
                 Console.WriteLine("There is no space in between the flag and the start of the argument, user's must also escape spaces within quotes.");
+
+                Console.WriteLine("-S enables sftp uploading, otherwise ftp will be used.");
 
                 Console.WriteLine("Example: deeploy -I\"C:\\Input Folder\" -O\"C:\\Output Folder\" -B1337 -C\"abcdefghijklmnop\" -Uhttp://google.com/");
                 return -1;
@@ -41,7 +44,7 @@ namespace Deeploy
             if (s_Parser.NoDeploy)
                 return 0; // OK
 
-            var s_UploadTask = new Deployer().Deploy(s_Builder.LastManifest, s_Parser.OutputDirectory);
+            var s_UploadTask = (s_Parser.SftpUpload ? (Deployer)new SshDeployer() : new FtpDeployer()).Deploy(s_Builder.LastManifest, s_Parser.OutputDirectory);
 
             s_UploadTask.Wait();
 
