@@ -37,6 +37,8 @@ namespace Deeploy
                     s_Ret = true;
                     NoDeploy = true;
                 }
+
+                // TODO: This needs to be fixed to get the cert path from here. -S"CertPath" and apply it as usual, right now this only pulls from the settings.
                 if (l_Argument.StartsWith("-S"))
                 {
                     s_Ret = true;

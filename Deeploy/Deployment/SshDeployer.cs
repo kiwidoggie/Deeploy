@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Deeploy.Deployment
@@ -16,6 +17,8 @@ namespace Deeploy.Deployment
         /// </summary>
         protected ConnectionInfo Information { get; set; }
 
+        protected bool Failed { get; set; }
+
         internal SshDeployer() : base()
         {
             var s_AuthenticationList = new List<AuthenticationMethod>();
@@ -28,6 +31,13 @@ namespace Deeploy.Deployment
                 {
                     new PrivateKeyFile(CertPath, Password)
                 }));
+
+            // Check to ensure that we have any authentication method set, otherwise we will get an exception
+            if (!s_AuthenticationList.Any())
+            {
+                Console.WriteLine($"There is no authentication method set.");
+                Environment.Exit(-1);
+            }
 
             Information = new ConnectionInfo(Server, Username, s_AuthenticationList.ToArray());
         }
@@ -48,7 +58,7 @@ namespace Deeploy.Deployment
                     if (!s_Client.IsConnected)
                         s_Client.Connect();
 
-                    using (var s_Command = s_Client.CreateCommand($"mkdir -p {s_Path} && chmod +rw {s_Path}"))
+                    using (var s_Command = s_Client.CreateCommand($"mkdir -p /{s_Path} && chmod +rw /{s_Path}"))
                     {
                         s_Command.Execute();
 #if DEBUG
@@ -64,7 +74,8 @@ namespace Deeploy.Deployment
             }
             catch (Exception p_Exception)
             {
-                Console.WriteLine($"Exception: {p_Exception.Message}");
+                Failed = true;
+                Console.WriteLine($"CreateDirectory Exception: {p_Exception.Message}");
                 return false;
             }
         }
@@ -77,6 +88,8 @@ namespace Deeploy.Deployment
         /// <returns></returns>
         public override Task<bool> Deploy(Manifest p_Manifest, string p_LocalPath)
         {
+            Failed = false;
+
             if (string.IsNullOrWhiteSpace(p_LocalPath))
                 return Task.FromResult(false);
 
@@ -91,7 +104,7 @@ namespace Deeploy.Deployment
 
             UploadRecursive(p_LocalPath, "/home/deeploy/_deployment");
 
-            return Task.FromResult(true);
+            return Task.FromResult(!Failed);
         }
 
         /// <summary>
@@ -120,7 +133,8 @@ namespace Deeploy.Deployment
             }
             catch (Exception p_Exception)
             {
-                Console.WriteLine($"Exception: {p_Exception.Message}");
+                Failed = true;
+                Console.WriteLine($"UploadFile Exception: {p_Path} {p_Exception.Message}");
                 return false;
             }
         }
@@ -142,15 +156,19 @@ namespace Deeploy.Deployment
 
 
                 var l_Data = File.ReadAllBytes(l_FilePath);
-                if (!UploadFile($"{p_RemoteDirectoryPath}/{l_ShortPath}", l_Data))
+                var l_Path = $"{p_RemoteDirectoryPath}/{l_ShortPath}";
+                if (!UploadFile(l_Path, l_Data))
                     continue;
 
-                Console.WriteLine($"{l_Data.Length} bytes written.");
+                Console.WriteLine($"{l_Path} {l_Data.Length} bytes written.");
             }
 
             foreach (var l_SubDirectory in s_SubDirectories)
             {
                 var l_DirectoryPath = $"{p_RemoteDirectoryPath}/{Path.GetFileName(l_SubDirectory)}";
+
+                Console.WriteLine($"Path: {l_DirectoryPath}");
+
                 CreateDirectory(l_DirectoryPath);
 
                 UploadRecursive(l_SubDirectory, l_DirectoryPath);
